@@ -357,7 +357,7 @@ Process:
   1. intervalMs = 60000 / BPM
   2. Timer.periodic(intervalMs):
      a. Determine if accent (beat == 0)
-     b. Play sound (accent.wav or click.wav)
+     b. Play sound (accent.mp3 or click.mp3)
      c. Emit beat to stream
      d. Increment beat % beatsPerBar
      e. Trigger haptic if audio fails

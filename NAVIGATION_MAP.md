@@ -193,7 +193,7 @@ User Taps Start → MetronomeStateNotifier.start()
                 → Timer.periodic(60000/bpm ms)
                 → Each tick:
                    - Determine accent (beat == 0)
-                   - Play audio (accent.wav or click.wav)
+                   - Play audio (accent.mp3 or click.mp3)
                    - Emit beat to stream
                    - Trigger haptic if audio fails
                    - Increment beat % beatsPerBar

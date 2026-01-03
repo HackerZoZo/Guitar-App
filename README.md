@@ -107,8 +107,8 @@ flutter pub get
 
 3. **Add Audio Assets** (Important!)
 Create metronome sound files:
-- `assets/sounds/click.wav` - Regular beat
-- `assets/sounds/accent.wav` - Accented beat
+- `assets/sounds/click.mp3` - Regular beat
+- `assets/sounds/accent.mp3` - Accented beat
 
 See `assets/sounds/README.md` for detailed instructions.
 

@@ -218,7 +218,7 @@ Musicality Rules:
 Precision Timing:
 - Timer.periodic(60000/BPM ms)
 - Beat stream for synchronization
-- Audio playback (accent.wav / click.wav)
+- Audio playback (accent.mp3 / click.mp3)
 - Haptic fallback if audio unavailable
 - Accuracy: ±5ms
 ```

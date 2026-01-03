@@ -390,8 +390,8 @@ Output: Complex, realistic patterns
 - **Calculation**: intervalMs = 60000 / BPM
 - **Accuracy**: ±5ms (Flutter Timer limit)
 - **Sounds**:
-  - `accent.wav` - Beat 1 (louder)
-  - `click.wav` - Other beats (standard)
+  - `accent.mp3` - Beat 1 (louder)
+  - `click.mp3` - Other beats (standard)
 - **Fallback**: HapticFeedback if audio fails
 - **Stream**: Broadcasts beats for synchronization
 

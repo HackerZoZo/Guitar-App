@@ -72,10 +72,12 @@ app.*.map.json
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
-# Audio files (can be large)
+# Audio files (can be large) - except required app assets
 *.wav
 *.mp3
 *.ogg
+# Allow required sound assets
+!assets/sounds/*.mp3
 
 # Keep placeholders
 !assets/sounds/*.txt

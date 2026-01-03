@@ -2,17 +2,17 @@ include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
-    - avoid_print
-    - prefer_const_constructors
-    - prefer_const_literals_to_create_immutables
-    - prefer_final_fields
-    - prefer_single_quotes
-    - sort_child_properties_last
-    - use_key_in_widget_constructors
-    - avoid_unnecessary_containers
-    - prefer_const_declarations
-    - prefer_if_null_operators
-    - unnecessary_null_in_if_null_operators
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_fields: true
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    use_key_in_widget_constructors: true
+    avoid_unnecessary_containers: true
+    prefer_const_declarations: true
+    prefer_if_null_operators: true
+    unnecessary_null_in_if_null_operators: true
 
 analyzer:
   exclude:

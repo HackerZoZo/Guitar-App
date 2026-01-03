@@ -4,8 +4,8 @@ This directory should contain the metronome sound files.
 
 ## Required Files:
 
-1. **click.wav** - Regular metronome click sound
-2. **accent.wav** - Accented beat sound (slightly louder/different)
+1. **click.mp3** - Regular metronome click sound
+2. **accent.mp3** - Accented beat sound (slightly louder/different)
 
 ## How to Add Audio Files:
 
@@ -31,7 +31,7 @@ You can generate simple click sounds using code:
 ```
 
 ## File Specifications:
-- Format: WAV (recommended) or MP3
+- Format: MP3 (or WAV)
 - Sample Rate: 44100 Hz
 - Bit Depth: 16-bit
 - Duration: 50-200ms
@@ -39,7 +39,7 @@ You can generate simple click sounds using code:
 
 ## Installation:
 1. Create this directory: `assets/sounds/`
-2. Add `click.wav` and `accent.wav`
+2. Add `click.mp3` and `accent.mp3`
 3. Ensure pubspec.yaml includes: `assets/sounds/`
 4. Run `flutter pub get`
 

@@ -23,8 +23,8 @@ class MetronomeEngine {
 
   Future<void> initialize() async {
     try {
-      await _clickPlayer.setSourceAsset('sounds/click.wav');
-      await _accentPlayer.setSourceAsset('sounds/accent.wav');
+      await _clickPlayer.setSourceAsset('sounds/click.mp3');
+      await _accentPlayer.setSourceAsset('sounds/accent.mp3');
       await _clickPlayer.setReleaseMode(ReleaseMode.stop);
       await _accentPlayer.setReleaseMode(ReleaseMode.stop);
     } catch (e) {
