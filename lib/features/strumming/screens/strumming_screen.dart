@@ -94,7 +94,7 @@ class _SetupView extends StatelessWidget {
                         Expanded(
                           child: Text(
                             timeSig.feel,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
@@ -192,7 +192,7 @@ class _SetupView extends StatelessWidget {
                 Switch(
                   value: state.grooveLocked,
                   onChanged: (_) => notifier.toggleGrooveLock(),
-                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary,
                 ),
               ],
             ),

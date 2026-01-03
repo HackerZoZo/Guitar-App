@@ -66,7 +66,6 @@ class StrummingNotifier extends StateNotifier<StrummingState> {
   final MetronomeEngine _metronomeEngine;
   StreamSubscription? _beatSubscription;
   int _barCount = 0;
-  int _variationNumber = 1;
 
   StrummingNotifier(this._generator, this._metronomeEngine) 
       : super(const StrummingState()) {
@@ -92,17 +91,12 @@ class StrummingNotifier extends StateNotifier<StrummingState> {
   }
 
   void generateNewPattern() {
-    // If groove is locked, only generate slight variations
-    if (state.grooveLocked && state.currentPattern != null) {
-      _variationNumber = (_variationNumber % 2) + 1; // Alternate between 1 and 2
-    } else {
-      _variationNumber = 1;
-    }
-
+    // Generate completely random pattern every time
+    // The variationNumber is passed but the generator uses random probabilities
     final pattern = _generator.generate(
       difficulty: state.difficulty,
       timeSignature: state.timeSignature,
-      variationNumber: _variationNumber,
+      variationNumber: DateTime.now().millisecondsSinceEpoch % 10000, // Use timestamp for randomness
     );
     
     state = state.copyWith(currentPattern: pattern);
@@ -126,17 +120,16 @@ class StrummingNotifier extends StateNotifier<StrummingState> {
     _beatSubscription = _metronomeEngine.beatStream.listen((beat) {
       state = state.copyWith(currentBeat: beat);
 
-      // Auto-generate variation every 4-8 bars (song-like behavior)
-      if (beat == 0) {
+      // Auto-generate new random pattern every 4 bars if not locked
+      if (beat == 0 && !state.grooveLocked) {
         _barCount++;
         
-        // Generate slight variation every 4 bars
-        if (_barCount % 4 == 0 && !state.grooveLocked) {
-          _variationNumber = (_variationNumber % 4) + 1;
+        // Generate completely new random pattern every 4 bars
+        if (_barCount % 4 == 0) {
           final newPattern = _generator.generate(
             difficulty: state.difficulty,
             timeSignature: state.timeSignature,
-            variationNumber: _variationNumber,
+            variationNumber: DateTime.now().millisecondsSinceEpoch % 10000,
           );
           state = state.copyWith(currentPattern: newPattern);
         }
@@ -156,13 +149,7 @@ class StrummingNotifier extends StateNotifier<StrummingState> {
   }
 
   void changePattern() {
-    if (state.grooveLocked) {
-      // Generate variation of current pattern
-      _variationNumber = (_variationNumber % 4) + 1;
-    } else {
-      // Generate completely new pattern
-      _variationNumber = 1;
-    }
+    // Always generate completely new random pattern
     generateNewPattern();
   }
 

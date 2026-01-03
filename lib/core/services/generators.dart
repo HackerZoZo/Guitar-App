@@ -108,53 +108,35 @@ class StrummingPatternGenerator {
     final strokes = <Stroke>[];
     final gridSize = timeSig.totalSubdivisions;
     
-    // Pattern library based on time signature feel
-    if (timeSig == TimeSignature.time3_4) {
-      // Waltz feel - D D D or D - D
-      final patterns = [
-        [StrokeType.down, StrokeType.down, StrokeType.down], // D D D
-        [StrokeType.down, StrokeType.rest, StrokeType.down], // D - D
-      ];
-      final pattern = patterns[variation % patterns.length];
+    // Generate truly random beginner patterns based on weighted probabilities
+    for (var i = 0; i < gridSize; i++) {
+      final beat = i ~/ timeSig.subdivision;
+      final subBeat = i % timeSig.subdivision;
       
-      for (var beat = 0; beat < timeSig.beats; beat++) {
-        final startIdx = beat * timeSig.subdivision;
-        strokes.add(Stroke(
-          type: pattern[beat],
-          position: startIdx,
-          isAccented: beat == 0,
-        ));
-        // Fill rest of subdivision with rests
-        for (var sub = 1; sub < timeSig.subdivision; sub++) {
-          strokes.add(Stroke(type: StrokeType.rest, position: startIdx + sub));
-        }
-      }
-    } else {
-      // 4/4, 2/4, etc. - Standard patterns
-      // Pattern: D - D - D - D - (all downbeats)
-      //      or: D - D U - U D -
-      final useUpstrokes = variation % 2 == 1;
+      StrokeType type;
+      bool isAccented = false;
       
-      for (var i = 0; i < gridSize; i++) {
-        final beat = i ~/ timeSig.subdivision;
-        final subBeat = i % timeSig.subdivision;
+      if (subBeat == 0) {
+        // Downbeat - always down stroke
+        type = StrokeType.down;
+        isAccented = timeSig.isStrongBeat(beat);
+      } else {
+        // Off-beats - random decision based on difficulty
+        final rand = _random.nextDouble();
         
-        StrokeType type;
-        bool isAccented = false;
-        
-        if (subBeat == 0) {
-          // Downbeat - always down stroke
-          type = StrokeType.down;
-          isAccented = timeSig.isStrongBeat(beat);
-        } else if (useUpstrokes && subBeat == timeSig.subdivision - 1) {
-          // Last subdivision - upstroke if enabled
-          type = beat % 2 == 1 ? StrokeType.up : StrokeType.rest;
+        if (rand < 0.3) {
+          // 30% chance of upstroke
+          type = StrokeType.up;
+        } else if (rand < 0.5 && subBeat == timeSig.subdivision - 1) {
+          // 20% chance of upstroke on last subdivision
+          type = StrokeType.up;
         } else {
+          // 50% rest
           type = StrokeType.rest;
         }
-        
-        strokes.add(Stroke(type: type, position: i, isAccented: isAccented));
       }
+      
+      strokes.add(Stroke(type: type, position: i, isAccented: isAccented));
     }
     
     return StrummingPattern(
@@ -175,40 +157,51 @@ class StrummingPatternGenerator {
   /// - Musical flow
   StrummingPattern _generateIntermediate(TimeSignature timeSig, int variation) {
     final strokes = <Stroke>[];
+    final gridSize = timeSig.totalSubdivisions;
     
-    // Classic intermediate patterns for 4/4
-    if (timeSig == TimeSignature.time4_4) {
-      final patterns = [
-        'D_DU_UDU', // D - D U - U D U (classic)
-        'DUDUDUDU', // D U D U D U D U (alternating)
-        'DU_UDU_U', // D U - U D U - U (syncopated)
-        'D_DUDU__', // D - D U D U - -
-      ];
+    // Generate truly random intermediate patterns with higher stroke density
+    for (var i = 0; i < gridSize; i++) {
+      final beat = i ~/ timeSig.subdivision;
+      final subBeat = i % timeSig.subdivision;
+      final weight = timeSig.getBeatWeight(i, timeSig.subdivision);
       
-      final patternStr = patterns[variation % patterns.length];
-      _parsePatternString(patternStr, strokes, timeSig);
-    } else if (timeSig == TimeSignature.time3_4) {
-      // Waltz patterns with upstrokes
-      final patterns = [
-        'DU_DU_DU_', // D U - D U - D U -
-        'D_DUD__U_', // D - D U D - - U -
-      ];
+      StrokeType type;
+      bool isAccented = false;
       
-      final patternStr = patterns[variation % patterns.length];
-      _parsePatternString(patternStr, strokes, timeSig);
-    } else if (timeSig == TimeSignature.time6_8) {
-      // Compound meter - lilting feel
-      final patterns = [
-        'D__U__D__U__', // D - - U - - D - - U - -
-        'DU_DU_DU_DU_', // More active
-      ];
+      // Strong beats always get strokes
+      if (subBeat == 0 && timeSig.isStrongBeat(beat)) {
+        type = StrokeType.down;
+        isAccented = true;
+      }
+      // Medium beats usually get strokes
+      else if (subBeat == 0 && timeSig.isMediumBeat(beat)) {
+        type = _random.nextDouble() < 0.8 ? StrokeType.down : StrokeType.rest;
+      }
+      // Other downbeats
+      else if (subBeat == 0) {
+        type = _random.nextDouble() < 0.6 ? StrokeType.down : StrokeType.rest;
+      }
+      // Off-beats - use weighted randomness
+      else {
+        final rand = _random.nextDouble();
+        
+        if (rand < weight * 0.7) {
+          // Higher chance for upstrokes on off-beats
+          final isUp = subBeat > 0 || i % 2 == 1;
+          type = isUp ? StrokeType.up : StrokeType.down;
+        } else {
+          type = StrokeType.rest;
+        }
+      }
       
-      final patternStr = patterns[variation % patterns.length];
-      _parsePatternString(patternStr, strokes, timeSig);
-    } else {
-      // Fallback for other time signatures
-      _generateGenericPattern(strokes, timeSig, 0.6, false);
+      strokes.add(Stroke(type: type, position: i, isAccented: isAccented));
     }
+    
+    // Ensure minimum strokes
+    _ensureMinimumStrokes(strokes, timeSig);
+    
+    // Enforce natural alternation
+    _enforceAlternation(strokes);
     
     return StrummingPattern(
       strokes: strokes,
@@ -231,7 +224,7 @@ class StrummingPatternGenerator {
     final strokes = <Stroke>[];
     final gridSize = timeSig.totalSubdivisions;
     
-    // Use weighted random generation for natural feel
+    // Use weighted random generation with higher complexity
     for (var i = 0; i < gridSize; i++) {
       final beat = i ~/ timeSig.subdivision;
       final subBeat = i % timeSig.subdivision;
@@ -247,20 +240,29 @@ class StrummingPatternGenerator {
       }
       // Medium beats usually get a stroke
       else if (subBeat == 0 && timeSig.isMediumBeat(beat)) {
-        type = _random.nextDouble() < 0.85 ? StrokeType.down : StrokeType.rest;
+        final rand = _random.nextDouble();
+        if (rand < 0.85) {
+          type = StrokeType.down;
+        } else {
+          type = StrokeType.rest;
+        }
       }
-      // Other beats - weighted randomness
-      else if (_random.nextDouble() < weight) {
+      // Other beats - weighted randomness with more variety
+      else if (_random.nextDouble() < weight * 0.85) {
         // Alternate down/up based on position
         final isUp = subBeat > 0 || i % 2 == 1;
         type = isUp ? StrokeType.up : StrokeType.down;
         
-        // Add ghost notes (20% chance on upstrokes)
-        if (_random.nextDouble() < 0.2 && isUp) {
+        // Add ghost notes (25% chance on upstrokes for variety)
+        if (_random.nextDouble() < 0.25 && isUp) {
           type = StrokeType.ghostUp;
         }
-        // Add mutes (10% chance)
-        else if (_random.nextDouble() < 0.1) {
+        // Add ghost downs (15% chance on downstrokes)
+        else if (_random.nextDouble() < 0.15 && !isUp) {
+          type = StrokeType.ghostDown;
+        }
+        // Add mutes (15% chance for percussive variety)
+        else if (_random.nextDouble() < 0.15) {
           type = StrokeType.mute;
         }
       } else {
@@ -273,7 +275,7 @@ class StrummingPatternGenerator {
     // Ensure musicality - at least one stroke per beat
     _ensureMinimumStrokes(strokes, timeSig);
     
-    // Smooth out impossible transitions (two ups in a row without down between)
+    // Smooth out impossible transitions
     _enforceAlternation(strokes);
     
     return StrummingPattern(
@@ -288,59 +290,6 @@ class StrummingPatternGenerator {
   // HELPER METHODS
   // ========================================================================
   
-  /// Parse pattern string like "D_DU_UDU" into strokes
-  /// D = Down, U = Up, _ = Rest
-  void _parsePatternString(String pattern, List<Stroke> strokes, TimeSignature timeSig) {
-    for (var i = 0; i < pattern.length; i++) {
-      final char = pattern[i];
-      
-      StrokeType type;
-      bool isAccented = false;
-      
-      switch (char) {
-        case 'D':
-          type = StrokeType.down;
-          isAccented = i == 0; // Accent first beat
-          break;
-        case 'U':
-          type = StrokeType.up;
-          break;
-        case '_':
-        default:
-          type = StrokeType.rest;
-      }
-      
-      strokes.add(Stroke(type: type, position: i, isAccented: isAccented));
-    }
-  }
-
-  /// Generate pattern with weighted randomness
-  void _generateGenericPattern(
-    List<Stroke> strokes,
-    TimeSignature timeSig,
-    double density,
-    bool includeGhosts,
-  ) {
-    final gridSize = timeSig.totalSubdivisions;
-    
-    for (var i = 0; i < gridSize; i++) {
-      final weight = timeSig.getBeatWeight(i, timeSig.subdivision);
-      
-      if (_random.nextDouble() < weight * density) {
-        final isUp = i % 2 == 1;
-        var type = isUp ? StrokeType.up : StrokeType.down;
-        
-        if (includeGhosts && isUp && _random.nextDouble() < 0.15) {
-          type = StrokeType.ghostUp;
-        }
-        
-        strokes.add(Stroke(type: type, position: i, isAccented: i == 0));
-      } else {
-        strokes.add(Stroke(type: StrokeType.rest, position: i));
-      }
-    }
-  }
-
   /// Ensure every beat has at least one stroke (no empty beats)
   void _ensureMinimumStrokes(List<Stroke> strokes, TimeSignature timeSig) {
     for (var beat = 0; beat < timeSig.beats; beat++) {
