@@ -1,0 +1,8 @@
+# Placeholder for click.wav
+# In a real implementation, this would be a WAV audio file
+# For now, the app will use haptic feedback as a fallback
+
+# To add actual audio:
+# 1. Record or download a short click sound (50-100ms)
+# 2. Save as click.wav in this directory
+# 3. Run: flutter pub get
