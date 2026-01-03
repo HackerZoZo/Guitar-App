@@ -50,7 +50,18 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Switch(
                   value: true,
                   onChanged: (value) {},
-                  activeThumbColor: AppColors.primary,
+                  thumbColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppColors.primary;
+                    }
+                    return null;
+                  }),
+                  trackColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppColors.primary.withValues(alpha: 0.5);
+                    }
+                    return null;
+                  }),
                 ),
               ),
             ],
