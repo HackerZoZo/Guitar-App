@@ -55,7 +55,7 @@ class PatternDisplay extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isHighlighted 
-                ? AppColors.primary.withOpacity(0.3)
+                ? AppColors.primary.withValues(alpha: 0.3)
                 : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(

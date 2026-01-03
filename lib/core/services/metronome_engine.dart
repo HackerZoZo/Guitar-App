@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class MetronomeEngine {
@@ -28,7 +29,7 @@ class MetronomeEngine {
       await _accentPlayer.setReleaseMode(ReleaseMode.stop);
     } catch (e) {
       // Fallback to system sounds if assets not available
-      print('Audio assets not found, using system sounds: $e');
+      debugPrint('Audio assets not found, using system sounds: $e');
     }
   }
 

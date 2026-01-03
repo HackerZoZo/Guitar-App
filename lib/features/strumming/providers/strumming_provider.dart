@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/chord.dart';
 import '../../../core/models/strumming_pattern.dart';
 import '../../../core/services/generators.dart';
+import '../../../core/services/metronome_engine.dart';
 import '../../../core/providers/providers.dart';
 
 final strummingProvider = StateNotifierProvider<StrummingNotifier, StrummingState>((ref) {
@@ -50,7 +51,7 @@ class StrummingState {
 
 class StrummingNotifier extends StateNotifier<StrummingState> {
   final StrummingPatternGenerator _generator;
-  final _metronomeEngine;
+  final MetronomeEngine _metronomeEngine;
   StreamSubscription? _beatSubscription;
 
   StrummingNotifier(this._generator, this._metronomeEngine) 

@@ -46,10 +46,10 @@ class _SetupView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SegmentedButton<Difficulty>(
-            segments: [
-              const ButtonSegment(value: Difficulty.beginner, label: Text('Easy')),
-              const ButtonSegment(value: Difficulty.intermediate, label: Text('Medium')),
-              const ButtonSegment(value: Difficulty.advanced, label: Text('Advanced')),
+            segments: const [
+              ButtonSegment(value: Difficulty.beginner, label: Text('Easy')),
+              ButtonSegment(value: Difficulty.intermediate, label: Text('Medium')),
+              ButtonSegment(value: Difficulty.advanced, label: Text('Advanced')),
             ],
             selected: {state.difficulty},
             onSelectionChanged: (Set<Difficulty> newSelection) {

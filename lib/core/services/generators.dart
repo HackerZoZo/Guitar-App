@@ -119,7 +119,9 @@ class StrummingPatternGenerator {
       if (_random.nextDouble() < 0.15) { // 15% chance of ghost note
         if (type == StrokeType.down) {
           type = StrokeType.ghostDown;
-        } else if (type == StrokeType.up) type = StrokeType.ghostUp;
+        } else if (type == StrokeType.up) {
+          type = StrokeType.ghostUp;
+        }
       }
       return Stroke(type: type, position: entry.key);
     }).toList();

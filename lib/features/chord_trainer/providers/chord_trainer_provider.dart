@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/chord.dart';
 import '../../../core/data/chord_repository.dart';
 import '../../../core/services/generators.dart';
+import '../../../core/services/metronome_engine.dart';
 import '../../../core/providers/providers.dart';
 
 final chordTrainerProvider = StateNotifierProvider<ChordTrainerNotifier, ChordTrainerState>((ref) {
@@ -63,14 +64,14 @@ class ChordTrainerState {
 
 class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
   final ChordGenerator _generator;
-  final _metronomeEngine;
+  final MetronomeEngine _metronomeEngine;
   StreamSubscription? _beatSubscription;
   Timer? _sessionTimer;
 
   ChordTrainerNotifier(
     this._generator,
     this._metronomeEngine,
-  ) : super(ChordTrainerState(
+  ) : super(const ChordTrainerState(
           availableChords: ChordRepository.allChords,
         ));
 
@@ -100,7 +101,7 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
   void start() {
     if (state.selectedChords.isEmpty) return;
 
-    Chord _nextRandomChord() {
+    Chord getNextRandomChord() {
       final seq = _generator.generateSequence(
         selectedChords: state.selectedChords,
         bars: 1,
@@ -124,7 +125,7 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
       return chord;
     }
 
-    final firstChord = _nextRandomChord();
+    final firstChord = getNextRandomChord();
 
     state = state.copyWith(
       currentBeat: 0,
@@ -147,7 +148,7 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
 
       // Change chord on the first beat of each bar
       if (beat == 0) {
-        final nextChord = _nextRandomChord();
+        final nextChord = getNextRandomChord();
         state = state.copyWith(currentChord: nextChord);
       }
     });

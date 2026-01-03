@@ -33,7 +33,7 @@ class MetronomeScreen extends ConsumerWidget {
                 boxShadow: state.isRunning
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           spreadRadius: 5,
                         ),
