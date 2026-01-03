@@ -23,54 +23,107 @@ class PatternDisplay extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Pattern',
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Text(
+                'Pattern',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  pattern.timeSignature.displayName,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _buildStrokeWidgets(),
+            children: _buildBeatWidgets(),
           ),
         ],
       ),
     );
   }
 
-  List<Widget> _buildStrokeWidgets() {
+  List<Widget> _buildBeatWidgets() {
     final widgets = <Widget>[];
-    final beatsPerBar = pattern.beatsPerBar;
-    final strokesPerBeat = pattern.strokes.length ~/ beatsPerBar;
+    final timeSignature = pattern.timeSignature;
 
-    for (int beat = 0; beat < beatsPerBar; beat++) {
-      final startIndex = beat * strokesPerBeat;
-      final endIndex = startIndex + strokesPerBeat;
-      final beatStrokes = pattern.strokes.sublist(startIndex, endIndex);
-
+    for (int beat = 0; beat < timeSignature.beats; beat++) {
+      final beatStrokes = pattern.getStrokesForBeat(beat);
       final isHighlighted = highlightBeat == beat;
+      final isStrongBeat = timeSignature.isStrongBeat(beat);
 
       widgets.add(
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isHighlighted 
-                ? AppColors.primary.withValues(alpha: 0.3)
-                : AppColors.surface,
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : isStrongBeat
+                    ? AppColors.surface.withValues(alpha: 0.8)
+                    : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isHighlighted ? AppColors.primary : AppColors.divider,
+              color: isHighlighted 
+                  ? AppColors.primary 
+                  : isStrongBeat
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.divider,
               width: isHighlighted ? 2 : 1,
             ),
+            boxShadow: isHighlighted
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: beatStrokes.map((stroke) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _StrokeSymbol(stroke: stroke),
-              );
-            }).toList(),
+          child: Column(
+            children: [
+              // Beat number
+              Text(
+                '${beat + 1}',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isStrongBeat 
+                      ? AppColors.primary 
+                      : AppColors.textTertiary,
+                  fontWeight: isStrongBeat ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Strokes
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: beatStrokes.map((stroke) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: _StrokeSymbol(
+                      stroke: stroke,
+                      isHighlighted: isHighlighted,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
         ),
       );
@@ -82,8 +135,12 @@ class PatternDisplay extends StatelessWidget {
 
 class _StrokeSymbol extends StatelessWidget {
   final Stroke stroke;
+  final bool isHighlighted;
 
-  const _StrokeSymbol({required this.stroke});
+  const _StrokeSymbol({
+    required this.stroke,
+    this.isHighlighted = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -93,19 +150,27 @@ class _StrokeSymbol extends StatelessWidget {
 
     switch (stroke.type) {
       case StrokeType.down:
-        color = AppColors.primary;
-        symbol = 'D';
-        fontSize = 18;
+        color = stroke.isAccented 
+            ? AppColors.primary
+            : isHighlighted
+                ? AppColors.primary.withValues(alpha: 0.9)
+                : AppColors.primary.withValues(alpha: 0.7);
+        symbol = stroke.isAccented ? 'D!' : 'D';
+        fontSize = stroke.isAccented ? 20 : 18;
         break;
       case StrokeType.up:
-        color = AppColors.primaryLight;
-        symbol = 'U';
-        fontSize = 18;
+        color = stroke.isAccented
+            ? AppColors.primaryLight
+            : isHighlighted
+                ? AppColors.primaryLight.withValues(alpha: 0.9)
+                : AppColors.primaryLight.withValues(alpha: 0.7);
+        symbol = stroke.isAccented ? 'U!' : 'U';
+        fontSize = stroke.isAccented ? 20 : 18;
         break;
       case StrokeType.rest:
         color = AppColors.textTertiary;
         symbol = '-';
-        fontSize = 18;
+        fontSize = 16;
         break;
       case StrokeType.ghostDown:
         color = AppColors.textSecondary;
@@ -129,7 +194,9 @@ class _StrokeSymbol extends StatelessWidget {
       style: TextStyle(
         color: color,
         fontSize: fontSize,
-        fontWeight: FontWeight.bold,
+        fontWeight: stroke.isAccented || isHighlighted 
+            ? FontWeight.bold 
+            : FontWeight.w600,
         fontFamily: 'monospace',
       ),
     );

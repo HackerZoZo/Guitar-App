@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/bpm_slider.dart';
 import '../../../core/models/chord.dart';
+import '../../../core/models/time_signature.dart';
 import '../providers/strumming_provider.dart';
 import '../widgets/pattern_display.dart';
 
@@ -40,6 +41,81 @@ class _SetupView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Time Signature Selection
+          Row(
+            children: [
+              const Icon(Icons.music_note, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Time Signature',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Dropdown for all time signatures
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<TimeSignature>(
+                value: state.timeSignature,
+                isExpanded: true,
+                dropdownColor: AppColors.surface,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+                items: TimeSignature.values.map((timeSig) {
+                  return DropdownMenuItem(
+                    value: timeSig,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            timeSig.displayName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            timeSig.feel,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (TimeSignature? newValue) {
+                  if (newValue != null) {
+                    notifier.setTimeSignature(newValue);
+                  }
+                },
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Difficulty Selection
           Text(
             'Difficulty',
             style: Theme.of(context).textTheme.titleLarge,
@@ -73,42 +149,53 @@ class _SetupView extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          Text(
-            'Time Signature',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 12),
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 4, label: Text('4/4')),
-              ButtonSegment(value: 3, label: Text('3/4')),
-              ButtonSegment(value: 6, label: Text('6/8')),
-            ],
-            selected: {state.beatsPerBar},
-            onSelectionChanged: (Set<int> newSelection) {
-              notifier.setBeatsPerBar(newSelection.first);
-            },
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.primary;
-                }
-                return AppColors.surfaceVariant;
-              }),
-              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return Colors.black;
-                }
-                return AppColors.textPrimary;
-              }),
-            ),
+          BpmSlider(
+            value: state.bpm,
+            onChanged: notifier.setBpm,
           ),
           
           const SizedBox(height: 24),
           
-          BpmSlider(
-            value: state.bpm,
-            onChanged: notifier.setBpm,
+          // Groove Lock Toggle
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  state.grooveLocked ? Icons.lock : Icons.lock_open,
+                  color: state.grooveLocked ? AppColors.primary : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lock Groove',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        state.grooveLocked 
+                            ? 'Pattern variations only' 
+                            : 'New patterns each time',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: state.grooveLocked,
+                  onChanged: (_) => notifier.toggleGrooveLock(),
+                  activeColor: AppColors.primary,
+                ),
+              ],
+            ),
           ),
           
           const SizedBox(height: 24),
@@ -156,7 +243,7 @@ class _SetupView extends StatelessWidget {
           const SizedBox(height: 12),
           
           Text(
-            'Legend: D = Down, U = Up, - = Rest, (D)/(U) = Ghost, X = Mute',
+            'Legend: D = Down, U = Up, - = Rest, ! = Accent, (D)/(U) = Ghost, X = Mute',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textTertiary,
             ),
@@ -183,8 +270,26 @@ class _PlayingView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Time Signature Display
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    state.timeSignature.displayName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Beat Counter
                 Text(
-                  'Beat ${state.currentBeat + 1} of ${state.beatsPerBar}',
+                  'Beat ${state.currentBeat + 1} of ${state.timeSignature.beats}',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 32),
