@@ -2,42 +2,39 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/chord.dart';
+import '../../../core/models/groove.dart';
 import '../../../core/data/chord_repository.dart';
 import '../../../core/services/metronome_engine.dart';
 import '../../../core/providers/providers.dart';
 
-final chordTrainerProvider =
-    StateNotifierProvider<ChordTrainerNotifier, ChordTrainerState>((ref) {
-  return ChordTrainerNotifier(
+final grooveModeProvider =
+    StateNotifierProvider<GrooveModeNotifier, GrooveModeState>((ref) {
+  return GrooveModeNotifier(
     ref.read(metronomeEngineProvider),
   );
 });
 
-class ChordTrainerState {
+class GrooveModeState {
   final List<Chord> availableChords;
-  final List<Chord> selectedChords;
   final Set<ChordCategory> selectedCategories;
   final Difficulty? difficulty;
   final int bpm;
-  final int sessionMinutes;
   final int beatsPerBar;
   final bool isPlaying;
   final int currentBeat;
-  final Chord? currentChord;
-  final bool allowRepetition;
+  final int sequenceLength;
+  final Groove? currentGroove;
 
-  const ChordTrainerState({
+  const GrooveModeState({
     required this.availableChords,
-    this.selectedChords = const [],
     this.selectedCategories = const {},
     this.difficulty,
     this.bpm = 80,
-    this.sessionMinutes = 2,
     this.beatsPerBar = 4,
     this.isPlaying = false,
     this.currentBeat = 0,
-    this.currentChord,
-    this.allowRepetition = true,
+    this.sequenceLength = 4,
+    this.currentGroove,
   });
 
   /// Get chords filtered by selected categories and difficulty
@@ -70,57 +67,42 @@ class ChordTrainerState {
     return chords;
   }
 
-  ChordTrainerState copyWith({
+  GrooveModeState copyWith({
     List<Chord>? availableChords,
-    List<Chord>? selectedChords,
     Set<ChordCategory>? selectedCategories,
     Difficulty? difficulty,
     bool clearDifficulty = false,
     int? bpm,
-    int? sessionMinutes,
     int? beatsPerBar,
     bool? isPlaying,
     int? currentBeat,
-    Chord? currentChord,
-    bool? allowRepetition,
+    int? sequenceLength,
+    Groove? currentGroove,
   }) {
-    return ChordTrainerState(
+    return GrooveModeState(
       availableChords: availableChords ?? this.availableChords,
-      selectedChords: selectedChords ?? this.selectedChords,
       selectedCategories: selectedCategories ?? this.selectedCategories,
       difficulty: clearDifficulty ? null : (difficulty ?? this.difficulty),
       bpm: bpm ?? this.bpm,
-      sessionMinutes: sessionMinutes ?? this.sessionMinutes,
       beatsPerBar: beatsPerBar ?? this.beatsPerBar,
       isPlaying: isPlaying ?? this.isPlaying,
       currentBeat: currentBeat ?? this.currentBeat,
-      currentChord: currentChord ?? this.currentChord,
-      allowRepetition: allowRepetition ?? this.allowRepetition,
+      sequenceLength: sequenceLength ?? this.sequenceLength,
+      currentGroove: currentGroove ?? this.currentGroove,
     );
   }
 }
 
-class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
+class GrooveModeNotifier extends StateNotifier<GrooveModeState> {
   final MetronomeEngine _metronomeEngine;
   final Random _random = Random();
   StreamSubscription? _beatSubscription;
-  Timer? _sessionTimer;
 
-  ChordTrainerNotifier(
+  GrooveModeNotifier(
     this._metronomeEngine,
-  ) : super(const ChordTrainerState(
+  ) : super(const GrooveModeState(
           availableChords: ChordRepository.allChords,
         ));
-
-  void toggleChord(Chord chord) {
-    final selected = List<Chord>.from(state.selectedChords);
-    if (selected.contains(chord)) {
-      selected.remove(chord);
-    } else {
-      selected.add(chord);
-    }
-    state = state.copyWith(selectedChords: selected);
-  }
 
   void toggleCategory(ChordCategory category) {
     final categories = Set<ChordCategory>.from(state.selectedCategories);
@@ -130,79 +112,75 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
       categories.add(category);
     }
     state = state.copyWith(selectedCategories: categories);
-
-    // Auto-update selected chords based on category filtering
-    _updateSelectedChordsFromFilters();
   }
 
   void selectAllCategories() {
     state = state.copyWith(
       selectedCategories: Set.from(ChordCategory.values),
     );
-    _updateSelectedChordsFromFilters();
   }
 
   void clearAllCategories() {
     state = state.copyWith(selectedCategories: {});
-    _updateSelectedChordsFromFilters();
-  }
-
-  void _updateSelectedChordsFromFilters() {
-    // Automatically select all chords that match current filters
-    final filtered = state.filteredChords;
-    state = state.copyWith(selectedChords: filtered);
   }
 
   void setDifficulty(Difficulty? difficulty) {
     state = state.copyWith(
         difficulty: difficulty, clearDifficulty: difficulty == null);
-    _updateSelectedChordsFromFilters();
   }
 
   void setBpm(int bpm) {
     state = state.copyWith(bpm: bpm);
   }
 
-  void setSessionMinutes(int minutes) {
-    final clamped = minutes.clamp(1, 5);
-    state = state.copyWith(sessionMinutes: clamped);
+  void setSequenceLength(int length) {
+    state = state.copyWith(sequenceLength: length.clamp(2, 8));
   }
 
-  void setAllowRepetition(bool allow) {
-    state = state.copyWith(allowRepetition: allow);
+  /// Generate a new groove with random chords and pattern
+  Groove _generateNewGroove() {
+    final chords = state.filteredChords;
+    if (chords.isEmpty) {
+      // Fallback to beginner chords
+      return Groove(
+        chords: [
+          ChordRepository.allChords.firstWhere((c) => c.name == 'Am'),
+          ChordRepository.allChords.firstWhere((c) => c.name == 'Dm'),
+          ChordRepository.allChords.firstWhere((c) => c.name == 'C'),
+        ],
+        strummingPattern: 'DDUD',
+      );
+    }
+
+    // Generate random chord sequence
+    final randomChords = <Chord>[];
+    for (int i = 0; i < state.sequenceLength; i++) {
+      randomChords.add(chords[_random.nextInt(chords.length)]);
+    }
+
+    // Generate random strumming pattern
+    const strummingSymbols = ['D', 'U'];
+    final patternLength = _random.nextInt(4) + 4; // 4-7 strokes
+    final pattern = List.generate(
+      patternLength,
+      (_) => strummingSymbols[_random.nextInt(strummingSymbols.length)],
+    ).join();
+
+    return Groove(
+      chords: randomChords,
+      strummingPattern: pattern,
+      playCount: 0,
+    );
   }
 
   void start() {
-    if (state.selectedChords.isEmpty) return;
+    if (state.filteredChords.isEmpty) return;
 
-    Chord getNextRandomChord() {
-      // Pure random - use Math.random directly for true randomness
-      final chords = state.selectedChords;
-      if (chords.isEmpty) {
-        return state.currentChord ?? ChordRepository.allChords.first;
-      }
-
-      // If repetition is allowed, just pick randomly
-      if (state.allowRepetition) {
-        return chords[_random.nextInt(chords.length)];
-      }
-
-      // If no repetition, avoid the current chord
-      if (chords.length == 1) {
-        return chords.first;
-      }
-
-      final availableForPick =
-          chords.where((c) => c != state.currentChord).toList();
-      return availableForPick[_random.nextInt(availableForPick.length)];
-    }
-
-    final firstChord = getNextRandomChord();
-
+    final groove = _generateNewGroove();
     state = state.copyWith(
-      currentBeat: 0,
-      currentChord: firstChord,
+      currentGroove: groove,
       isPlaying: true,
+      currentBeat: 0,
     );
 
     _metronomeEngine.start(
@@ -210,18 +188,25 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
       beatsPerBar: state.beatsPerBar,
     );
 
-    _sessionTimer?.cancel();
-    _sessionTimer = Timer(Duration(minutes: state.sessionMinutes), () {
-      stop();
-    });
-
     _beatSubscription = _metronomeEngine.beatStream.listen((beat) {
       state = state.copyWith(currentBeat: beat);
 
-      // Change chord on the first beat of each bar
-      if (beat == 0) {
-        final nextChord = getNextRandomChord();
-        state = state.copyWith(currentChord: nextChord);
+      // Detect end of bar/sequence
+      if (beat == 0 && state.currentBeat != 0) {
+        // One play-through complete
+        final groove = state.currentGroove!;
+        final newPlayCount = groove.playCount + 1;
+
+        if (newPlayCount >= 4) {
+          // Generate new groove and reset play count
+          final newGroove = _generateNewGroove();
+          state = state.copyWith(currentGroove: newGroove);
+        } else {
+          // Continue with same groove
+          state = state.copyWith(
+            currentGroove: groove.copyWith(playCount: newPlayCount),
+          );
+        }
       }
     });
   }
@@ -229,7 +214,6 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
   void stop() {
     _metronomeEngine.stop();
     _beatSubscription?.cancel();
-    _sessionTimer?.cancel();
     state = state.copyWith(
       isPlaying: false,
       currentBeat: 0,
@@ -239,7 +223,6 @@ class ChordTrainerNotifier extends StateNotifier<ChordTrainerState> {
   @override
   void dispose() {
     _beatSubscription?.cancel();
-    _sessionTimer?.cancel();
     super.dispose();
   }
 }

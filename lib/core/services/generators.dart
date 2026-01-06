@@ -124,15 +124,15 @@ class StrummingPatternGenerator {
         // Off-beats - random decision based on difficulty
         final rand = _random.nextDouble();
         
-        if (rand < 0.3) {
-          // 30% chance of upstroke
+        if (rand < 0.4) {
+          // 40% chance of upstroke
           type = StrokeType.up;
-        } else if (rand < 0.5 && subBeat == timeSig.subdivision - 1) {
+        } else if (rand < 0.6 && subBeat == timeSig.subdivision - 1) {
           // 20% chance of upstroke on last subdivision
           type = StrokeType.up;
         } else {
-          // 50% rest
-          type = StrokeType.rest;
+          // 40% mute strokes for percussive texture
+          type = StrokeType.mute;
         }
       }
       
@@ -175,11 +175,11 @@ class StrummingPatternGenerator {
       }
       // Medium beats usually get strokes
       else if (subBeat == 0 && timeSig.isMediumBeat(beat)) {
-        type = _random.nextDouble() < 0.8 ? StrokeType.down : StrokeType.rest;
+        type = _random.nextDouble() < 0.8 ? StrokeType.down : StrokeType.mute;
       }
       // Other downbeats
       else if (subBeat == 0) {
-        type = _random.nextDouble() < 0.6 ? StrokeType.down : StrokeType.rest;
+        type = _random.nextDouble() < 0.6 ? StrokeType.down : StrokeType.mute;
       }
       // Off-beats - use weighted randomness
       else {
@@ -190,7 +190,7 @@ class StrummingPatternGenerator {
           final isUp = subBeat > 0 || i % 2 == 1;
           type = isUp ? StrokeType.up : StrokeType.down;
         } else {
-          type = StrokeType.rest;
+          type = StrokeType.mute;
         }
       }
       
@@ -217,8 +217,8 @@ class StrummingPatternGenerator {
   
   /// Generate advanced patterns
   /// - Natural accents and dynamics
-  /// - Beat skipping (silence)
-  /// - Musical flow with ghost notes and mutes
+  /// - Mute strokes for percussive texture
+  /// - Musical flow with hand alternation
   /// - Song-like phrasing
   StrummingPattern _generateAdvanced(TimeSignature timeSig, int variation) {
     final strokes = <Stroke>[];
@@ -244,7 +244,7 @@ class StrummingPatternGenerator {
         if (rand < 0.85) {
           type = StrokeType.down;
         } else {
-          type = StrokeType.rest;
+          type = StrokeType.mute;
         }
       }
       // Other beats - weighted randomness with more variety
@@ -253,20 +253,12 @@ class StrummingPatternGenerator {
         final isUp = subBeat > 0 || i % 2 == 1;
         type = isUp ? StrokeType.up : StrokeType.down;
         
-        // Add ghost notes (25% chance on upstrokes for variety)
-        if (_random.nextDouble() < 0.25 && isUp) {
-          type = StrokeType.ghostUp;
-        }
-        // Add ghost downs (15% chance on downstrokes)
-        else if (_random.nextDouble() < 0.15 && !isUp) {
-          type = StrokeType.ghostDown;
-        }
-        // Add mutes (15% chance for percussive variety)
-        else if (_random.nextDouble() < 0.15) {
+        // Add mute strokes (20% chance for percussive variety)
+        if (_random.nextDouble() < 0.20) {
           type = StrokeType.mute;
         }
       } else {
-        type = StrokeType.rest;
+        type = StrokeType.mute;
       }
       
       strokes.add(Stroke(type: type, position: i, isAccented: isAccented));
@@ -298,7 +290,7 @@ class StrummingPatternGenerator {
       
       final hasStroke = strokes
           .where((s) => s.position >= beatStart && s.position < beatEnd)
-          .any((s) => s.type != StrokeType.rest);
+          .any((s) => s.type != StrokeType.mute);
       
       if (!hasStroke) {
         // Add a downstroke at the beat
@@ -321,17 +313,15 @@ class StrummingPatternGenerator {
     for (var i = 0; i < strokes.length; i++) {
       final current = strokes[i].type;
       
-      if (current != StrokeType.rest && current != StrokeType.mute) {
+      if (current != StrokeType.mute) {
         // If two ups or two downs in a row, fix it
         if (lastStroke == StrokeType.up && current == StrokeType.up) {
-          // Change to down if not ghost
-          if (current != StrokeType.ghostUp) {
-            strokes[i] = Stroke(
-              type: StrokeType.down,
-              position: strokes[i].position,
-              isAccented: strokes[i].isAccented,
-            );
-          }
+          // Change to down
+          strokes[i] = Stroke(
+            type: StrokeType.down,
+            position: strokes[i].position,
+            isAccented: strokes[i].isAccented,
+          );
         } else if (lastStroke == StrokeType.down && current == StrokeType.down) {
           // Allow consecutive downs on strong beats, otherwise change to up
           if (i > 0 && i - (strokes.indexWhere((s) => s == strokes[i - 1])) > 1) {

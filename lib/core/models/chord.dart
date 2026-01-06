@@ -4,7 +4,34 @@ enum ChordType {
   major,
   minor,
   barre,
-  seventh,
+  seventh, // Dominant 7 (e.g., G7, A7)
+  majorSeventh, // Major 7 (e.g., Cmaj7, Fmaj7)
+  minorSeventh, // Minor 7 (e.g., Am7, Dm7)
+  sus2, // Suspended 2
+  sus4, // Suspended 4
+  add9, // Added 9
+  add11, // Added 11
+  ninth, // 9 chords
+  eleventh, // 11 chords
+  power, // Power chords (5)
+  slash, // Slash chords (e.g., C/G)
+  diminished, // Diminished chords
+  augmented, // Augmented chords
+}
+
+/// Chord category for filtering in the UI
+enum ChordCategory {
+  major,
+  minor,
+  barre,
+  seventh, // 7, maj7, m7
+  suspended, // sus2, sus4
+  added, // add9, add11
+  extended, // 9, 11
+  slash, // slash chords
+  power, // power chords
+  diminished, // dim
+  augmented, // aug
 }
 
 enum Difficulty {
@@ -22,6 +49,7 @@ class Chord extends Equatable {
   final int baseFret;
   final bool isOpen;
   final bool isBarre;
+  final ChordCategory category;
 
   const Chord({
     required this.name,
@@ -32,6 +60,7 @@ class Chord extends Equatable {
     this.baseFret = 1,
     this.isOpen = true,
     this.isBarre = false,
+    this.category = ChordCategory.major,
   });
 
   @override

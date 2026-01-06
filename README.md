@@ -35,7 +35,19 @@ A fully offline Android guitar practice application built with Flutter. Clean, m
 - Beat highlighting during practice
 - Generate new patterns on-the-fly
 
-### 5. **Professional Metronome**
+### 5. **Practice Generator** ⭐⭐ NEW!
+- Realistic strumming patterns combined with random chords
+- **Clean output** - Only D (down), U (up), X (mute) symbols
+- **Three practice modes**: Jam, Practice, Groove Exploration
+- **7 time signatures** (2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 12/8)
+- **Pattern lengths**: 1, 2, or 4 bars
+- **Chord categories**: Major, Minor, Barre, Custom
+- Musically realistic patterns - feels like real songs
+- Difficulty-based pattern complexity
+- Perfect for practicing rhythm + chord changes together
+- See [PRACTICE_GENERATOR.md](PRACTICE_GENERATOR.md) for full details
+
+### 6. **Professional Metronome**
 - BPM range: 40-220
 - Visual beat indicators
 - Accent on beat 1
@@ -43,7 +55,7 @@ A fully offline Android guitar practice application built with Flutter. Clean, m
 - Quick tempo presets
 - Global integration with all features
 
-### 6. **Settings & Customization**
+### 7. **Settings & Customization**
 - Fully offline operation
 - Dark mode by default
 - Haptic feedback options

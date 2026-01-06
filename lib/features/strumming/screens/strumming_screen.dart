@@ -243,7 +243,7 @@ class _SetupView extends StatelessWidget {
           const SizedBox(height: 12),
           
           Text(
-            'Legend: D = Down, U = Up, - = Rest, ! = Accent, (D)/(U) = Ghost, X = Mute',
+            'Legend: D = Down, U = Up, X = Mute',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textTertiary,
             ),

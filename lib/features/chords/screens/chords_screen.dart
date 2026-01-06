@@ -4,6 +4,7 @@ import '../../../core/models/chord.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/chord_diagram.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../core/data/chord_repository.dart';
 import '../../../core/providers/providers.dart';
 
 class ChordsScreen extends ConsumerStatefulWidget {
@@ -13,13 +14,15 @@ class ChordsScreen extends ConsumerStatefulWidget {
   ConsumerState<ChordsScreen> createState() => _ChordsScreenState();
 }
 
-class _ChordsScreenState extends ConsumerState<ChordsScreen> with SingleTickerProviderStateMixin {
+class _ChordsScreenState extends ConsumerState<ChordsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // 11 categories + All Chords tab
+    _tabController = TabController(length: 12, vsync: this);
   }
 
   @override
@@ -34,26 +37,45 @@ class _ChordsScreenState extends ConsumerState<ChordsScreen> with SingleTickerPr
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chords'),
+        title: const Text('All Chords Library'),
         backgroundColor: AppColors.background,
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           tabs: const [
+            Tab(text: 'All'),
             Tab(text: 'Major'),
             Tab(text: 'Minor'),
             Tab(text: 'Barre'),
+            Tab(text: '7th'),
+            Tab(text: 'Sus'),
+            Tab(text: 'Add'),
+            Tab(text: 'Extended'),
+            Tab(text: 'Power'),
+            Tab(text: 'Slash'),
+            Tab(text: 'Dim'),
+            Tab(text: 'Aug'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
+          const _ChordList(chords: ChordRepository.allChords),
           _ChordList(chords: chordRepo.getMajorChords()),
           _ChordList(chords: chordRepo.getMinorChords()),
           _ChordList(chords: chordRepo.getBarreChords()),
+          _ChordList(chords: chordRepo.getSeventhChords()),
+          _ChordList(chords: chordRepo.getSuspendedChords()),
+          _ChordList(chords: chordRepo.getAddedChords()),
+          _ChordList(chords: chordRepo.getExtendedChords()),
+          _ChordList(chords: chordRepo.getPowerChords()),
+          _ChordList(chords: chordRepo.getSlashChords()),
+          _ChordList(chords: chordRepo.getDiminishedChords()),
+          _ChordList(chords: chordRepo.getAugmentedChords()),
         ],
       ),
     );
@@ -101,9 +123,9 @@ class _ChordCard extends StatelessWidget {
             Text(
               chord.name,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 28,
-                color: AppColors.primary,
-              ),
+                    fontSize: 28,
+                    color: AppColors.primary,
+                  ),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -171,7 +193,9 @@ class _ChordDetailSheet extends ConsumerWidget {
           _FingerPositions(chord: chord),
           const SizedBox(height: 24),
           PrimaryButton(
-            text: metronomeState.isRunning ? 'Stop Practice' : 'Practice with Metronome',
+            text: metronomeState.isRunning
+                ? 'Stop Practice'
+                : 'Practice with Metronome',
             icon: metronomeState.isRunning ? Icons.stop : Icons.play_arrow,
             onPressed: metronomeNotifier.toggle,
           ),
@@ -195,7 +219,7 @@ class _FingerPositions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stringNames = ['E', 'A', 'D', 'G', 'B', 'e'];
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -214,7 +238,7 @@ class _FingerPositions extends StatelessWidget {
             final fret = chord.frets[i];
             final finger = chord.fingers[i];
             final stringName = stringNames[i];
-            
+
             String position;
             if (fret == -1) {
               position = 'Muted';
@@ -223,7 +247,7 @@ class _FingerPositions extends StatelessWidget {
             } else {
               position = 'Fret $fret (Finger $finger)';
             }
-            
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
@@ -261,7 +285,7 @@ class _DifficultyBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     String label;
-    
+
     switch (difficulty) {
       case Difficulty.beginner:
         color = AppColors.success;
